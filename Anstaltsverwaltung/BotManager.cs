@@ -8,6 +8,7 @@ using Discord.Rest;
 using System.Threading.Channels;
 using Discord.Audio;
 using System.Diagnostics;
+using System.Net;
 
 namespace Anstaltsverwaltung
 {
@@ -59,6 +60,62 @@ namespace Anstaltsverwaltung
             BotClient.UserJoined += BotClient_UserJoined;
             BotClient.ReactionAdded += BotClient_ReactionAdded;
             BotClient.ButtonExecuted += BotClient_ButtonExecuted;
+            BotClient.SlashCommandExecuted += BotClient_SlashCommandExecuted;
+
+            SlashCommandBuilder soundboardBuilder = new SlashCommandBuilder();
+            await BotClient.CreateGlobalApplicationCommandAsync(soundboardBuilder.WithName("soundboard").WithDescription("Öffnet das Soundboard Menü.").Build());
+            SlashCommandBuilder uploadBuilder = new SlashCommandBuilder();
+            await BotClient.CreateGlobalApplicationCommandAsync(uploadBuilder.WithName("sbupload").WithDescription("Lädt einen Soundboard Sound hoch.").AddOption("sound", ApplicationCommandOptionType.Attachment, "Der Sound als mp3 Datei", isRequired: true).Build());
+            SlashCommandBuilder partyBuilder = new SlashCommandBuilder();
+            await BotClient.CreateGlobalApplicationCommandAsync(partyBuilder.WithName("party").WithDescription("PARTYYY.").Build());
+        }
+
+        private Task BotClient_SlashCommandExecuted(SocketSlashCommand arg)
+        {
+            switch (arg.Data.Name)
+            {
+                case "soundboard":
+                    _ = Task.Run(async () =>
+                    {
+                        await arg.RespondAsync("**Soundboard Menü**", components: SoundboardCommand.GetSoundboard().Build());
+                    });
+                    return Task.CompletedTask;
+                case "sbupload":
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            var attachment = (IAttachment)arg.Data.Options.First().Value;
+                            var url = attachment.Url;
+                            if (!attachment.Filename.EndsWith(".mp3")) return;
+                            using (HttpClient httpClient = new HttpClient())
+                            {
+                                using (Stream stream = await httpClient.GetStreamAsync(url))
+                                {
+                                    using (FileStream fs = new FileStream("./sounds/" + attachment.Filename, FileMode.OpenOrCreate))
+                                    {
+                                        await stream.CopyToAsync(fs);
+                                    }
+                                }
+                            }
+                            await arg.RespondAsync("Der Sound **" + attachment.Filename + "** wurde hochgeladen.");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                            await arg.RespondAsync("Ein Fehler ist aufgetreten.");
+                        }
+                    });
+                    return Task.CompletedTask;
+                case "party":
+                    _ = Task.Run(async () =>
+                    {
+                        await arg.RespondWithFileAsync("./canAsharkDance.gif");
+                    });
+                    return Task.CompletedTask;
+                default:
+                    return Task.CompletedTask;
+            }
         }
 
         private Task BotClient_ButtonExecuted(SocketMessageComponent arg)
