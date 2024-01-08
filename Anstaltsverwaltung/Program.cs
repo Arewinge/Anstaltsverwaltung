@@ -4,8 +4,8 @@
     {
         static void Main(string[] args)
         {
-            BotManager manager = new BotManager();
-            manager.RunBot().GetAwaiter().GetResult();
+            Bot bot = new Bot();
+            bot.RunBot().GetAwaiter().GetResult();
         }
     }
 }
