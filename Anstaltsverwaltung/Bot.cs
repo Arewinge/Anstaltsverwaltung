@@ -131,7 +131,6 @@ namespace Anstaltsverwaltung
             
 
             BotClient.UserJoined += BotClient_UserJoined;
-            BotClient.ReactionAdded += BotClient_ReactionAdded;
             BotClient.ButtonExecuted += BotClient_ButtonExecuted;
             BotClient.SlashCommandExecuted += BotClient_SlashCommandExecuted;
 
@@ -185,35 +184,47 @@ namespace Anstaltsverwaltung
         }
         private Task BotClient_ButtonExecuted(SocketMessageComponent arg)
         {
-            _ = Task.Run(async () =>
+            if (arg.Data.CustomId.Equals("AV-votekick-yes"))
             {
-                if (arg.GuildId == null) return;
-                var channel = BotClient.GetGuild(arg.GuildId.Value).GetUser(arg.User.Id).VoiceChannel;
-                await arg.DeferAsync();
-                var client = await channel.ConnectAsync();
-                await SendSound(client, arg.Data.CustomId);
-                await channel.DisconnectAsync();
-            });
-            return Task.CompletedTask;
+                _ = Task.Run(async () =>
+                {
+                    var channel = arg.Channel;
+                    var message = arg.Message;
+
+                    await arg.DeferAsync();
+
+                    var user = votingUsers.Find(user => user.Id == arg.User.Id);
+
+                    privilegedUsers = votingUsers.FindAll(user => user.Roles.ToList().Find(role => role.Id == ulong.Parse(ConfigurationManager.AppSettings.Get("PrivilegedRoleId"))) != null);
+                    privilegedUserPresent = privilegedUsers != null;
+
+                    if (!votePending) return;
+                    if (message.Id != voteMessageId) return;
+                    if (user == null) return;
+                    voteCount++;
+                    votingUsers.Remove(user);
+                    await EvaluateVotekickResult(channel);
+                });
+                return Task.CompletedTask;
+            } else if (arg.Data.CustomId.Equals("AV-votekick-no"))
+            {
+                arg.DeferAsync();
+                return Task.CompletedTask;
+            } else
+            {
+                _ = Task.Run(async () =>
+                {
+                    if (arg.GuildId == null) return;
+                    var channel = BotClient.GetGuild(arg.GuildId.Value).GetUser(arg.User.Id).VoiceChannel;
+                    await arg.DeferAsync();
+                    var client = await channel.ConnectAsync();
+                    await SendSound(client, arg.Data.CustomId);
+                    await channel.DisconnectAsync();
+                });
+                return Task.CompletedTask;
+            }
         }
-        private async Task BotClient_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction reaction)
-        {
-            var channel = await arg2.GetOrDownloadAsync();
-            var message = await arg1.GetOrDownloadAsync();
 
-            var user = votingUsers.Find(user => user.Id == reaction.UserId);
-
-            privilegedUsers = votingUsers.FindAll(user => user.Roles.ToList().Find(role => role.Id == ulong.Parse(ConfigurationManager.AppSettings.Get("PrivilegedRoleId"))) != null);
-            privilegedUserPresent = privilegedUsers != null;
-
-            if (!votePending) return;
-            if (message.Id != voteMessageId) return;
-            if (user == null) return;
-            voteCount++;
-            votingUsers.Remove(user);
-            await EvaluateVotekickResult(channel);
-        }
-        
         private async Task BotClient_UserJoined(SocketGuildUser arg)
         {
             ulong roleId = ulong.Parse(ConfigurationManager.AppSettings.Get("DefaultRoleId"));
@@ -288,7 +299,7 @@ namespace Anstaltsverwaltung
             voteGoal = requestingUser.VoiceChannel.ConnectedUsers.Count - 1;
             voteCount = 1;
             votingUsers.Remove(requestingUser);
-            await arg.RespondAsync("**Votekick gegen den User **" + target.Mention + "\nReagiere auf diese Nachricht um für den Kick zu stimmen.");
+            await arg.RespondAsync("**Votekick gegen den User **" + target.Mention + "\nStimme ab.", components: new ComponentBuilder().WithButton("Kick", "AV-votekick-yes", ButtonStyle.Danger, Emoji.Parse(":heavy_multiplication_x:")).WithButton("Kein Kick", "AV-votekick-no", ButtonStyle.Secondary, Emoji.Parse(":white_check_mark:")).Build());
             var message = await arg.GetOriginalResponseAsync();
             voteMessageId = message.Id;
             var counterMessage = await channel.SendMessageAsync($"**{voteCount} / {voteGoal}** :question:");
