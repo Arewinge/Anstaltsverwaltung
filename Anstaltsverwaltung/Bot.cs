@@ -165,7 +165,7 @@ namespace Anstaltsverwaltung
         {
             switch (arg.Data.Name)
             {
-                case "soundboard" or "sb":
+                case "soundboard":
                     await HandleSoundboardCommand(arg);
                     break;
                 case "party":
@@ -174,7 +174,7 @@ namespace Anstaltsverwaltung
                 case "upload":
                     await HandleUploadCommand(arg);
                     break;
-                case "votekick" or "vk":
+                case "votekick":
                     await HandleVotekickCommand(arg);
                     break;
                 case "set":
@@ -241,7 +241,9 @@ namespace Anstaltsverwaltung
             {
                 buttons.WithButton(label: Path.GetFileNameWithoutExtension(sound), customId: Path.GetFileName(sound));
             }
-            await arg.RespondAsync("**Soundboard Menü**", components: buttons.Build());
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.WithAuthor("Test").WithDescription("Test description");
+            await arg.RespondAsync("**Soundboard Menü**", components: buttons.Build(), embed: embedBuilder.Build());
         }
         public async Task HandlePartyCommand(SocketSlashCommand arg)
         {
