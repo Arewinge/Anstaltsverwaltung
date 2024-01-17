@@ -247,8 +247,8 @@ namespace Anstaltsverwaltung
                 buttons.WithButton(label: Path.GetFileNameWithoutExtension(sound), customId: Path.GetFileName(sound));
             }
             EmbedBuilder embedBuilder = new EmbedBuilder();
-            embedBuilder.WithAuthor("Test").WithDescription("Test description");
-            await arg.RespondAsync("**Soundboard Menü**", components: buttons.Build(), embed: embedBuilder.Build());
+            embedBuilder.WithTitle("Soundboard").WithColor(Color.Teal);
+            await arg.RespondAsync(components: buttons.Build(), embed: embedBuilder.Build());
         }
         public async Task HandlePartyCommand(SocketSlashCommand arg)
         {
@@ -354,6 +354,7 @@ namespace Anstaltsverwaltung
         }
         public async Task HandlePurgewaifuCommand(SocketSlashCommand arg)
         {
+            await arg.DeferAsync();
             var channel = arg.Channel;
             await foreach (var msg in channel.GetMessagesAsync().Flatten())
             {
