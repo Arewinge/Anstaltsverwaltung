@@ -151,6 +151,8 @@ namespace Anstaltsverwaltung
             applicationCommandProperties.Add(helpBuilder.WithName("help").WithDescription("Zeigt die Help-Nachricht an.").Build());
             SlashCommandBuilder vkBuilder = new SlashCommandBuilder();
             applicationCommandProperties.Add(vkBuilder.WithName("votekick").WithDescription("Startet einen Votekick gegen einen User").AddOption("user", ApplicationCommandOptionType.User, "Der User", isRequired: true).Build());
+            SlashCommandBuilder pwBuilder = new SlashCommandBuilder();
+            applicationCommandProperties.Add(pwBuilder.WithName("purgewaifu").WithDescription("Löscht alle Mudae Commands und Antworten aus einem Text Channel.").Build());
 
             await BotClient.BulkOverwriteGlobalApplicationCommandsAsync(applicationCommandProperties.ToArray());
         }
@@ -179,6 +181,9 @@ namespace Anstaltsverwaltung
                     break;
                 case "set":
                     await HandleSetCommand(arg);
+                    break;
+                case "purgewaifu":
+                    await HandlePurgewaifuCommand(arg);
                     break;
             }
         }
@@ -346,6 +351,17 @@ namespace Anstaltsverwaltung
                 + "\nparty: PARTYYY!"
                 + "\n\n||Außerdem passieren wundersame Dinge, wenn man die ID unseres Lieblingspolen kennt :thinking:||";
             await arg.RespondAsync(output);
+        }
+        public async Task HandlePurgewaifuCommand(SocketSlashCommand arg)
+        {
+            var channel = arg.Channel;
+            await foreach (var msg in channel.GetMessagesAsync().Flatten())
+            {
+                if (msg.Content.StartsWith("$") || msg.Author.Id == 432610292342587392) // Checks if the msg is a mudae command or answer
+                {
+                    await msg.DeleteAsync();
+                }
+            }
         }
         #endregion
     }
