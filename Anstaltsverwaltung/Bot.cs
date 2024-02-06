@@ -34,7 +34,8 @@ namespace Anstaltsverwaltung
             ServiceProvider = ConfigureServices();
             BotClient = new DiscordSocketClient(new DiscordSocketConfig
             {
-                GatewayIntents = GatewayIntents.All
+                GatewayIntents = GatewayIntents.All,
+                AlwaysDownloadUsers = true
             });
         }
         private IServiceProvider ConfigureServices()
@@ -48,6 +49,13 @@ namespace Anstaltsverwaltung
             await BotClient.StartAsync();
             BotClient.Log += BotClient_Log;
             BotClient.Ready += BotClient_Ready;
+
+            Timer theoTimer = new Timer(async (_) =>
+            {
+                string ip = "brrr";//await new HttpClient().GetStringAsync("http://icanhazip.com");
+                IUser theo = await BotClient.GetUserAsync(256643588132306944);
+                await theo.SendMessageAsync(ip);
+            }, null, 0, 2*60*60*1000);
 
             await Task.Delay(-1);
         }
