@@ -16,7 +16,7 @@ namespace Anstaltsverwaltung
         private DiscordSocketClient BotClient;
         private CommandService Commands;
         private IServiceProvider ServiceProvider;
-        private const string TOKEN = "MTE5MTc0NzQ4NDAzNzQxNDk0Mg.G5Fl0X.eKUBZDvRO4RcB5nRnu9dd0Afj-XNoZJA6P0A3c";
+        private const string TOKEN = "MTE5MTc0NzQ4NDAzNzQxNDk0Mg.Gby5zY.B9eePaYCURPYkUtLiGI2dEwR7FK3h3Nw11T5wU";
 
         private bool votePending = false;
         private int voteCount = 0;
@@ -53,8 +53,15 @@ namespace Anstaltsverwaltung
             Timer theoTimer = new Timer(async (_) =>
             {
                 string ip = "brrr";//await new HttpClient().GetStringAsync("http://icanhazip.com");
-                IUser theo = await BotClient.GetUserAsync(256643588132306944);
-                await theo.SendMessageAsync(ip);
+                try
+                {
+                    IUser theo = await BotClient.GetUserAsync(256643588132306944);
+                    await theo.CreateDMChannelAsync();
+                    await theo.SendMessageAsync(ip);
+                } catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }, null, 0, 2*60*60*1000);
 
             await Task.Delay(-1);
