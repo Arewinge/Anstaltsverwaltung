@@ -52,11 +52,10 @@ namespace Anstaltsverwaltung
 
             Timer theoTimer = new Timer(async (_) =>
             {
-                string ip = "brrr";//await new HttpClient().GetStringAsync("http://icanhazip.com");
+                string ip = await new HttpClient().GetStringAsync("http://icanhazip.com");
                 try
                 {
-                    IUser theo = await BotClient.GetUserAsync(256643588132306944);
-                    await theo.CreateDMChannelAsync();
+                    var theo = discord.CreatePrivateChannel(256643588132306944);
                     await theo.SendMessageAsync(ip);
                 } catch (Exception ex)
                 {
